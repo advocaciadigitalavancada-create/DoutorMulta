@@ -1,0 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Playfair+Display:ital,wght@0,400;0,600;0,900;1,400;1,600;1,900&display=swap');
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply bg-[#F5F2ED] text-[#1A1A1A] font-sans antialiased m-0 h-full overflow-hidden;
+  }
+  html {
+    @apply h-full m-0 overflow-hidden;
+  }
+  #root {
+    @apply h-full flex flex-col overflow-hidden;
+  }
+}
+

@@ -1,0 +1,6 @@
+{
+  "name": "Doutor Multa",
+  "description": "SaaS de IA focado em análise e recursos de multas de trânsito brasileiras (CTB).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
