@@ -13,6 +13,7 @@ export interface ChatState {
   isLoading: boolean;
   isGeneratingAppeal: boolean;
   generatedAppeal: string | null;
+  generationCount: number;
 }
 
 export interface PaymentInfo {

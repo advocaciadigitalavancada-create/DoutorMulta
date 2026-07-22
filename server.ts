@@ -7,51 +7,36 @@ import admin from 'firebase-admin';
 
 dotenv.config();
 
-const SYSTEM_INSTRUCTION = `Você é o Doutor Multa, um sistema de IA focado em recursos de trânsito.
-Todo o conhecimento jurídico que você possui foi estruturado com o auxílio de advogados especialistas em Direito de Trânsito Brasileiro (CTB).
-ATENÇÃO E ÉTICA: Você não é um advogado e não realiza consultoria jurídica. Você é um assistente tecnológico (software) processador de textos. Deixe isso claro na sua postura.
+const SYSTEM_INSTRUCTION = `Você é o Doutor Multa, o assistente virtual de atendimento que interage com o motorista no chat.
+Seu papel é de ACOLHIMENTO, CONFIRMAÇÃO DE DADOS e ORIENTAÇÃO. A análise jurídica detalhada e a redação do recurso são feitas por outros agentes especializados em segundo plano.
+
+ATENÇÃO E ÉTICA:
+Você é um assistente tecnológico (software) processador de textos, e não um advogado. Nunca faça consultoria jurídica. Se precisar avisar isso, faça de forma extremamente curta em uma única frase (ex: "Lembrando que sou uma IA e não presto consultoria jurídica"). Não faça discursos longos sobre isso.
 
 CONDUÇÃO DA CONVERSA:
-1. Comece saudando o usuário cordialmente. Peça que ele descreva a multa que recebeu e envie uma FOTO ou PDF do auto de infração, bem como uma cópia (foto/PDF) da CNH do condutor.
-2. Se o usuário enviar documentos (imagens/PDFs), analise-os cuidadosamente. EXTRAIA TODOS OS DADOS POSSÍVEIS tanto da infração (Placa, Renavam, Data, Hora, Local, Código CTB, Valor, Órgão) quanto os qualificatórios do condutor que estiverem visíveis (Nome, CPF, CNH, Endereço). Liste os dados extraídos e peça confirmação.
-2.1 Se o usuário avisar que "os dados já estão na multa" ou no documento enviado, confira novamente a imagem/PDF para extrair CPF, CNH, Nome ou Endereço que possam ter passado despercebidos.
-2.2 Pergunte também se foi o proprietário do veículo que cometeu a infração (nos casos em que não houve abordagem). Caso negativo, explique que ele pode fazer a INDICAÇÃO DO CONDUTOR INFRATOR.
-2.3 Com os dados extraídos, busque falhas na formação do auto de infração, inconsistências e teses de defesa.
-3. REGRA CONTRA PLACEHOLDERS: ANTES de concluir a conversa e autorizar o usuário a clicar em "Gerar Recurso", você TEM OBRIGATORIAMENTE que ter os dados qualificatórios: Nome Completo, CPF, CNH e Endereço. Se ALGUM desses dados NÃO estiver nos documentos enviados, você DEVE pedir a ele que digite o dado que falta ou envie o documento faltante (como a CNH). Não prossiga sem os dados ou sem a confirmação de que ele os preencherá à mão.
-4. Faça de forma proativa uma verificação rigorosa dos **requisitos formais do auto de infração de trânsito** conforme o **Artigo 280 do CTB**.
-O auto de infração DEVE conter os seguintes requisitos obrigatórios para ser válido:
-- Tipificação da infração (Código CTB e descrição)
-- Local da infração (Endereço completo)
-- Data da infração
-- Hora da infração
-- Identificação do veículo (Placa, marca, modelo)
-- Prontuário do condutor (se aplicável)
-- Órgão autuador
-- Agente autuador e sua matrícula
-- Assinatura do infrator (quando houver abordagem)
+1. SAUDAÇÃO: Cumprimente o usuário, faça o aviso curto sobre ser IA, e peça o relato do caso, foto/PDF da multa e da CNH do condutor.
+2. CONFIRMAÇÃO DE ANÁLISE: Quando receber a análise estruturada do documento (injetada pelo sistema):
+   * Apresente os dados extraídos em formato de tópicos curtos.
+   * Informe muito brevemente (1 ou 2 linhas) se foi encontrada alguma falha formal ou inconsistência. Não explique a fundamentação jurídica completa no chat.
+   * Peça educadamente os dados qualificatórios obrigatórios (Nome completo, CPF, CNH ou Endereço) que ainda estiverem ausentes.
+   * REGRA DE OURO DO CHAT: Nunca mencione termos internos de programação ou do prompt (como "Regra de Placeholders", "Placeholder", "Regra de Segurança" ou "Sinal verde"). Apenas peça o dado naturalmente (Ex: "Para concluir, digite aqui o seu endereço completo").
+3. CONDUTOR E PROPRIETÁRIO: Se não houve abordagem, valide se o motorista era o condutor. Se não, informe brevemente sobre a possibilidade de indicação.
+4. FINALIZAÇÃO: Assim que tiver os dados confirmados, apenas informe que está tudo pronto e instrua-o a clicar no botão "Gerar Recurso PDF".
 
-5. AVALIAÇÃO DE NULIDADE: Se **qualquer** requisito do Art. 280 listado acima estiver ausente, incorreto, ilegível ou incompleto (ex: local muito impreciso, falta da matrícula do agente, horário não preenchido), explique ao usuário que o auto é **NULO**. Aconselhe que uma tese forte de defesa (falta de amparo legal/requisitos formais do art. 280) será utilizada no recurso.
-5.1 SE NÃO HOUVER DEFESA ÓBVIA: Caso os dados pareçam corretos e não haja falha formal evidente, você deve criar uma tese questionando a validade técnica da autuação. Questione enfaticamente a aferição do equipamento pelo INMETRO (alegando que não há prova de aferição nos últimos 12 meses), a falta constatação visual clara pelo agente, falta de sinalização visível no local ou cerceamento de defesa. O objetivo é sempre fornecer um recurso contundente para o usuário.
-6. Apenas quando REUNIR ABSOLUTAMENTE TODOS OS DADOS (nome, cpf, endereço, renavam, auto de infração e fatos) informe-o que o sistema já tem o necessário.
-7. Explique o fundamento legal. (Se for apenas indicação de condutor, avise sobre o prazo de indicação, a necessidade das assinaturas originais do proprietário e do condutor e o envio da cópia da CNH/documento do veículo).
-8. Peça que ele clique no botão "Gerar Recurso PDF" na interface para emitir o documento final (sem partes em branco!). 
-9. Recomende fortemente o Protocolo Online (DETRAN DIGITAL - p/ SC):
-   - Acesse o portal do DETRAN.
-   - Login GOV.BR (prata/ouro).
-   - Menu "SERVIÇOS REFERENTES À INFRAÇÕES DE TRÂNSITO".
-   - Selecione a opção desejada (Indicação de Condutor, Defesa de Autuação ou Recurso à JARI).
-   - Anexe documentos e confirme a solicitação.
+DIRETRIZES DE ESTILO E TOM DE VOZ:
+- Extremamente conciso. Respostas com no máximo 2 a 3 parágrafos curtos.
+- Evite repetição: se você já explicou a tese na mensagem anterior, não a repita ao pedir os dados faltantes.
+- Use tom profissional, empático e direto.`;
 
-TOM DE VOZ:
-Profissional, acolhedor e direto. Use PT-BR.
-Nunca invente artigos que não existem. Aplique os princípios do CTB, resoluções do CONTRAN (como a Res. 918/2022) e Senatran em vigor.`;
+const ANALYZER_PROMPT = `Você é o Agente Analista Especialista em Trânsito. Analise a imagem fornecida (Auto de Infração ou CNH) e/ou o histórico da conversa com o motorista e preencha o relatório estruturado (JSON).
 
-const ANALYZER_PROMPT = `Você é o Agente Analista Especialista em Trânsito. Analise o histórico da conversa com o motorista e:
+SUAS TAREFAS:
 1. Identifique o objetivo: Defesa/Recurso ou Indicação de Condutor.
-2. Extraia TODOS os dados disponíveis.
-3. Formule a Tese de Defesa (se for o caso), verificando nulidades pelos requisitos formais do Art. 280 do CTB.
+2. Extraia todos os dados qualificatórios e da infração (Placa, AIT, Marca/Modelo, Data/Hora, Local, Código/Enquadramento, Valor, Nome, CPF, CNH, Endereço).
+3. Formule a Tese de Defesa baseando-se nos requisitos obrigatórios do Art. 280 do CTB (tipificação, local completo, data/hora, placa, identificação/matrícula do agente autuador, etc.). Se algum dado estiver incorreto ou ausente (ex: agente não identificado), estruture a tese com foco nessa nulidade formal.
+4. Se o auto estiver formalmente correto, crie uma tese questionando a validade técnica (ex: falta de comprovação de aferição do radar pelo INMETRO nos últimos 12 meses, fragilidade da constatação visual sem abordagem/foto, etc.).
 
-Preencha as informações no formato estruturado (JSON) solicitado. Seja objetivo e não invente dados.`;
+Seja estritamente objetivo. Não invente dados que não constam no documento ou no histórico.`;
 
 const REVIEWER_PROMPT = `Você é um Agente Revisor rigoroso, especialista em direito de trânsito. Revise o documento rascunho fornecido pelo usuário.
 SUAS TAREFAS SÃO:
@@ -130,7 +115,7 @@ INSTRUÇÕES: Preencha com os dados reais do Relatório. Para dados faltantes, t
 
 async function startServer() {
   const app = express();
-  const PORT = process.env.PORT || 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -162,75 +147,118 @@ async function startServer() {
   };
 
   // Payment Endpoints (Asaas Mock/Integration)
+  // Payment Endpoints (Mercado Pago / Asaas / Mock)
   const mockPayments = new Map<string, { status: string }>();
 
   app.post("/api/create-payment", async (req, res) => {
     try {
-      const apiKey = process.env.ASAAS_API_KEY;
+      const { amount, description, email } = req.body;
+      const paymentAmount = Number(amount) || 29.90;
+      const paymentDescription = description || "Geração de Recurso de Multa em PDF";
+
+      const mpToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
+      const asaasApiKey = process.env.ASAAS_API_KEY;
       
-      if (!apiKey) {
-        // MOCK MODE: Quando o usuário não possui API Key do Asaas configurada
-        const paymentId = `mock_pay_${Date.now()}`;
-        mockPayments.set(paymentId, { status: 'PENDING' });
+      // 1. MERCADO PAGO INTEGRATION (Recomendado: Sem custos fixos, aprovação instantânea por CPF)
+      if (mpToken) {
+        const mpResponse = await fetch('https://api.mercadopago.com/v1/payments', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${mpToken}`,
+            'X-Idempotency-Key': `pay_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
+          },
+          body: JSON.stringify({
+            transaction_amount: paymentAmount,
+            description: paymentDescription,
+            payment_method_id: 'pix',
+            payer: {
+              email: email || 'cliente@doutormulta.com.br'
+            }
+          })
+        });
+
+        const mpData = await mpResponse.json();
         
-        // Simula o pagamento sendo confirmado após 10 segundos
-        setTimeout(() => {
-          if (mockPayments.has(paymentId)) {
-            mockPayments.set(paymentId, { status: 'CONFIRMED' });
-            console.log(`[MOCK] Pagamento ${paymentId} confirmado automaticamente.`);
-          }
-        }, 10000);
+        if (!mpResponse.ok || !mpData.id) {
+          console.error("Erro no Mercado Pago:", mpData);
+          throw new Error(mpData.message || "Erro ao criar cobrança no Mercado Pago");
+        }
+
+        const transactionData = mpData.point_of_interaction?.transaction_data;
 
         return res.json({
-          id: paymentId,
-          // QR Code em base64 mockado (pixel preto para exemplo visual)
-          encodedImage: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", 
-          payload: "00020126360014BR.GOV.BCB.PIX0114+5547999999999520400005303986540529.905802BR5912Doutor Multa6009Joinville62070503***6304ABCD",
-          mock: true
+          id: mpData.id.toString(),
+          encodedImage: transactionData?.qr_code_base64 || '',
+          payload: transactionData?.qr_code || '',
+          mock: false,
+          gateway: 'mercadopago'
         });
       }
 
-      // IMPLEMENTAÇÃO REAL DA API ASAAS (Será ativada quando houver ASAAS_API_KEY no .env)
-      const apiUrl = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/api/v3';
+      // 2. ASAAS INTEGRATION (Opção secundária se houver ASAAS_API_KEY no .env)
+      if (asaasApiKey) {
+        const apiUrl = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/api/v3';
+        
+        const customerResponse = await fetch(`${apiUrl}/customers`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'access_token': asaasApiKey },
+          body: JSON.stringify({ name: "Cliente Doutor Multa", cpfCnpj: "00000000000" })
+        });
+        const customerData = await customerResponse.json();
+        
+        if (!customerData.id) throw new Error("Erro ao criar cliente no Asaas");
+
+        const paymentResponse = await fetch(`${apiUrl}/payments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'access_token': asaasApiKey },
+          body: JSON.stringify({
+            customer: customerData.id,
+            billingType: "PIX",
+            value: paymentAmount,
+            dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+            description: paymentDescription
+          })
+        });
+        const paymentData = await paymentResponse.json();
+
+        if (!paymentData.id) throw new Error("Erro ao criar cobrança no Asaas");
+
+        const pixResponse = await fetch(`${apiUrl}/payments/${paymentData.id}/pixQrCode`, {
+          method: 'GET',
+          headers: { 'access_token': asaasApiKey }
+        });
+        const pixData = await pixResponse.json();
+
+        return res.json({
+          id: paymentData.id,
+          encodedImage: pixData.encodedImage,
+          payload: pixData.payload,
+          mock: false,
+          gateway: 'asaas'
+        });
+      }
+
+      // 3. MOCK MODE (Ativado quando nenhuma API KEY é configurada)
+      const paymentId = `mock_pay_${Date.now()}`;
+      mockPayments.set(paymentId, { status: 'PENDING' });
       
-      // 1. Criar Cliente Avulso (Opcional, mas Asaas costuma exigir cliente para gerar cobrança)
-      const customerResponse = await fetch(`${apiUrl}/customers`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'access_token': apiKey },
-        body: JSON.stringify({ name: "Cliente Doutor Multa", cpfCnpj: "00000000000" })
-      });
-      const customerData = await customerResponse.json();
-      
-      if (!customerData.id) throw new Error("Erro ao criar cliente no Asaas");
+      setTimeout(() => {
+        if (mockPayments.has(paymentId)) {
+          mockPayments.set(paymentId, { status: 'CONFIRMED' });
+          console.log(`[MOCK] Pagamento ${paymentId} confirmado automaticamente.`);
+        }
+      }, 10000);
 
-      // 2. Criar Cobrança PIX
-      const paymentResponse = await fetch(`${apiUrl}/payments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'access_token': apiKey },
-        body: JSON.stringify({
-          customer: customerData.id,
-          billingType: "PIX",
-          value: 29.90,
-          dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0], // +1 dia
-          description: "Geração de Recurso de Multa em PDF"
-        })
-      });
-      const paymentData = await paymentResponse.json();
+      const formattedAmount = paymentAmount.toFixed(2);
+      const payload = `00020126360014BR.GOV.BCB.PIX0114+55479999999995204000053039865405${formattedAmount}5802BR5912Doutor Multa6009Joinville62070503***6304ABCD`;
 
-      if (!paymentData.id) throw new Error("Erro ao criar cobrança no Asaas");
-
-      // 3. Obter QR Code PIX
-      const pixResponse = await fetch(`${apiUrl}/payments/${paymentData.id}/pixQrCode`, {
-        method: 'GET',
-        headers: { 'access_token': apiKey }
-      });
-      const pixData = await pixResponse.json();
-
-      res.json({
-        id: paymentData.id,
-        encodedImage: pixData.encodedImage,
-        payload: pixData.payload,
-        mock: false
+      return res.json({
+        id: paymentId,
+        encodedImage: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", 
+        payload: payload,
+        mock: true,
+        gateway: 'mock'
       });
 
     } catch (error) {
@@ -242,29 +270,66 @@ async function startServer() {
   app.get("/api/check-payment/:id", async (req, res) => {
     try {
       const paymentId = req.params.id;
-      const apiKey = process.env.ASAAS_API_KEY;
+      const mpToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
+      const asaasApiKey = process.env.ASAAS_API_KEY;
 
-      if (!apiKey) {
-        // MOCK MODE
+      // Se for pagamento simulado (mock)
+      if (paymentId.startsWith('mock_pay_')) {
         const mockData = mockPayments.get(paymentId);
         if (mockData) {
           return res.json({ status: mockData.status });
         }
-        return res.status(404).json({ error: "Cobrança não encontrada (Mock)" });
+        return res.status(404).json({ error: "Cobrança mock não encontrada" });
       }
 
-      // IMPLEMENTAÇÃO REAL
-      const apiUrl = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/api/v3';
-      const checkResponse = await fetch(`${apiUrl}/payments/${paymentId}`, {
-        method: 'GET',
-        headers: { 'access_token': apiKey }
-      });
-      const checkData = await checkResponse.json();
-      
-      res.json({ status: checkData.status }); // status no Asaas pode ser 'PENDING', 'RECEIVED', 'CONFIRMED'
+      // Consulta Mercado Pago
+      if (mpToken && !isNaN(Number(paymentId))) {
+        const checkResponse = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${mpToken}` }
+        });
+        const checkData = await checkResponse.json();
+        
+        const statusMap: Record<string, string> = {
+          'approved': 'CONFIRMED',
+          'pending': 'PENDING',
+          'in_process': 'PENDING',
+          'rejected': 'CANCELLED',
+          'cancelled': 'CANCELLED'
+        };
+
+        return res.json({ status: statusMap[checkData.status] || 'PENDING' });
+      }
+
+      // Consulta Asaas
+      if (asaasApiKey) {
+        const apiUrl = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/api/v3';
+        const checkResponse = await fetch(`${apiUrl}/payments/${paymentId}`, {
+          method: 'GET',
+          headers: { 'access_token': asaasApiKey }
+        });
+        const checkData = await checkResponse.json();
+        return res.json({ status: checkData.status });
+      }
+
+      return res.status(400).json({ error: "Gateway não configurado" });
     } catch (error) {
       console.error('Payment Check Error:', error);
       res.status(500).json({ error: "Erro ao consultar status da cobrança" });
+    }
+  });
+
+  // Webhook Mercado Pago (para receber notificações automáticas do PIX)
+  app.post("/api/webhook/mercadopago", async (req, res) => {
+    try {
+      const { type, data } = req.body;
+      if (type === 'payment' && data?.id) {
+        console.log(`[MercadoPago Webhook] Notificação de pagamento recebida para o ID: ${data.id}`);
+      }
+      res.sendStatus(200);
+    } catch (error) {
+      console.error('Webhook Error:', error);
+      res.sendStatus(500);
     }
   });
 
@@ -284,7 +349,73 @@ async function startServer() {
         })
       ];
 
-      const userParts: any[] = [{ text: message || "Upload de imagem" }];
+      let analysisContext = "";
+      if (image) {
+        const base64Data = image.split(',')[1];
+        const mimeType = image.split(';')[0].split(':')[1] || 'image/jpeg';
+        
+        try {
+          const analyzerResponse = await ai.models.generateContent({
+            model: 'gemini-3.5-flash',
+            contents: [
+              {
+                role: 'user',
+                parts: [
+                  { text: "Analise esta imagem (Auto de Infração ou CNH) para extrair os dados e identificar possíveis irregularidades de trânsito." },
+                  { inlineData: { data: base64Data, mimeType } }
+                ]
+              }
+            ],
+            config: {
+              systemInstruction: ANALYZER_PROMPT,
+              temperature: 0.2,
+              responseMimeType: "application/json",
+              responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                  objetivo: { type: Type.STRING, description: "Defesa/Recurso ou Indicação de Condutor" },
+                  dados: {
+                    type: Type.OBJECT,
+                    properties: {
+                      nome: { type: Type.STRING },
+                      cpf: { type: Type.STRING },
+                      endereco: { type: Type.STRING },
+                      cnh: { type: Type.STRING },
+                      placa: { type: Type.STRING },
+                      renavam: { type: Type.STRING },
+                      auto_de_infracao: { type: Type.STRING },
+                      orgao_autuador: { type: Type.STRING },
+                      codigo_multa: { type: Type.STRING }
+                    }
+                  },
+                  dados_faltantes: {
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING },
+                    description: "Lista de dados qualificatórios que o usuário ainda não forneceu (ex: CPF, CNH, Endereço)"
+                  },
+                  tese_defesa: { type: Type.STRING, description: "Tese de Defesa fundamentada ou descrição da inconsistência encontrada" }
+                },
+                required: ["objetivo", "dados", "dados_faltantes", "tese_defesa"]
+              }
+            }
+          });
+          
+          const analysisJson = analyzerResponse.text;
+          analysisContext = `\n\n[ANÁLISE DO SISTEMA EM SEGUNDO PLANO - INFORMAÇÃO PARA O ATENDENTE]:
+O sistema analisou a imagem enviada com sucesso. Aqui está o relatório estruturado em JSON:
+${analysisJson}
+
+Instruções para você (Doutor Multa):
+1. Apresente os dados extraídos de forma muito resumida e legível em tópicos (bullet points) para o usuário confirmar.
+2. Diga de forma muito breve (1 a 2 linhas) se foi encontrada alguma irregularidade (baseado no campo tese_defesa). Não explique a fundamentação jurídica de forma detalhada no chat.
+3. Peça de forma amigável e direta os dados qualificatórios listados no campo dados_faltantes (ex: Endereço completo). Nunca cite regras de placeholders ou termos técnicos.
+4. Mantenha a resposta concisa.`;
+        } catch (analError) {
+          console.error("Erro na análise do documento pelo Analyzer:", analError);
+        }
+      }
+
+      const userParts: any[] = [{ text: (message || "Upload de imagem") + analysisContext }];
       if (image) {
         const base64Data = image.split(',')[1];
         const mimeType = image.split(';')[0].split(':')[1] || 'image/jpeg';
@@ -387,6 +518,8 @@ async function startServer() {
       let finalDoc = reviewerResponse.text || "";
       // Remover possíveis blocos markdown que a IA ainda possa gerar por vício
       finalDoc = finalDoc.replace(/```[A-Za-z]*\\n?/g, '').replace(/```/g, '').trim();
+      // Garantia programática: substitui qualquer placeholder residual com colchetes por linha de preenchimento manual
+      finalDoc = finalDoc.replace(/\[[^\]]{1,80}\]/g, '___________________________');
 
       res.json({ document: finalDoc });
     } catch (error) {

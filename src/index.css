@@ -3,13 +3,38 @@
 
 @layer base {
   body {
-    @apply bg-[#F5F2ED] text-[#1A1A1A] font-sans antialiased m-0 h-full overflow-hidden;
+    @apply bg-[#FDFBF7] text-[#1A1A1A] font-sans antialiased m-0 h-full overflow-hidden;
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(38, 100%, 95%, 1) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(30, 40%, 90%, 1) 0px, transparent 50%);
   }
   html {
     @apply h-full m-0 overflow-hidden;
   }
   #root {
     @apply h-full flex flex-col overflow-hidden;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.1);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.2);
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply bg-white/60 backdrop-blur-xl border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.04)];
   }
 }
 

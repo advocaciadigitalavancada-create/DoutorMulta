@@ -13,6 +13,7 @@ export default function App() {
     isLoading: false,
     isGeneratingAppeal: false,
     generatedAppeal: null,
+    generationCount: 0,
   });
 
   const [currentView, setCurrentView] = useState<'chat' | 'appeal'>('chat');
@@ -83,10 +84,14 @@ export default function App() {
     }
   };
 
-  const handleCreatePayment = async () => {
+  const handleCreatePayment = async (amount: number, description: string) => {
     setIsCreatingPayment(true);
     try {
-      const response = await fetch('/api/create-payment', { method: 'POST' });
+      const response = await fetch('/api/create-payment', { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount, description })
+      });
       if (!response.ok) throw new Error("Erro ao criar cobrança");
       const data = await response.json();
       setPaymentInfo(data);
@@ -127,7 +132,8 @@ export default function App() {
       setState(prev => ({
         ...prev,
         isGeneratingAppeal: false,
-        generatedAppeal: data.document
+        generatedAppeal: data.document,
+        generationCount: prev.generationCount + 1
       }));
       
       setCurrentView('appeal');
@@ -138,77 +144,92 @@ export default function App() {
     }
   };
 
+  const handleRequestAppealGeneration = async () => {
+    if (state.generationCount === 0) {
+      // Primeira geração: Exige pagamento de R$ 29,90
+      await handleCreatePayment(29.90, "Geração de Recurso de Multa em PDF");
+    } else if (state.generationCount < 3) {
+      // Segunda e Terceira geração: Grátis (revisões inclusas)
+      await handleGenerateAppeal();
+    } else {
+      // Quarta geração em diante: Exige pagamento adicional de R$ 5,00
+      await handleCreatePayment(5.00, `Regeração de Defesa - Versão ${state.generationCount + 1}`);
+    }
+  };
+
   return (
-    <div className="h-full bg-[#F5F2ED] text-[#1A1A1A] font-sans overflow-hidden flex flex-col print:bg-white print:h-auto">
-      <header className="flex justify-between items-end p-6 md:p-8 border-b border-black/10 shrink-0 print:hidden">
-        <div>
-          <h1 className="text-5xl md:text-7xl font-[Playfair_Display] font-black tracking-tighter leading-none">
-            DOUTOR <span className="italic relative -ml-2">MULTA</span>
-          </h1>
-          <p className="mt-2 text-[10px] md:text-sm uppercase tracking-[0.2em] font-semibold opacity-60 text-[#8B4513]">
-            Inteligência Especializada no CTB
-          </p>
-        </div>
-        <div className="hidden md:flex flex-col items-end">
-          <div className="text-xs font-mono mb-2 uppercase tracking-widest">
-            {user ? `Bem-vindo(a), ${user.displayName || 'Motorista'}` : 'Visitante'}
-          </div>
-          {user ? (
-            <button onClick={logout} className="text-xs font-bold border border-black/20 px-3 py-1 rounded hover:bg-black/5 transition">
-              Sair
-            </button>
-          ) : (
-            <button onClick={loginWithGoogle} className="text-xs font-bold bg-black text-white px-3 py-1 rounded hover:bg-black/80 transition">
-              Login com Google
-            </button>
-          )}
-        </div>
-      </header>
+    <div className="h-screen w-full flex flex-col justify-between p-2 md:p-4 bg-transparent text-[#1A1A1A] font-sans overflow-hidden">
+      <div className="w-full flex-1 max-w-[1440px] mx-auto flex flex-col md:rounded-3xl md:glass-panel overflow-hidden relative shadow-2xl bg-[#FDFBF7]/60 min-h-0">
+        <main className="flex-1 min-h-0 w-full mx-auto grid grid-cols-1 lg:grid-cols-12 overflow-hidden print:block print:overflow-visible relative z-0">
+          <section className={cn("col-span-1 lg:col-span-5 flex flex-col min-h-0 border-r border-black/10 bg-white/40 h-full print:hidden transition-all duration-300", currentView === 'chat' ? 'flex' : 'hidden lg:flex')}>
+            <header className="flex justify-between items-center p-4 md:p-6 border-b border-black/10 shrink-0 print:hidden relative z-10 bg-white/30 backdrop-blur-md">
+              <div className="flex flex-col">
+                <h1 className="text-2xl md:text-3xl lg:text-4xl font-[Playfair_Display] font-black tracking-tighter leading-none">
+                  DOUTOR <span className="italic relative -ml-1 text-amber-700">MULTA</span>
+                </h1>
+                <p className="mt-1 text-[7px] md:text-[9px] uppercase tracking-[0.2em] font-semibold opacity-70 text-[#8B4513]">
+                  Inteligência Especializada no CTB
+                </p>
+              </div>
+              <div className="flex flex-col items-end">
+                <div className="text-[8px] md:text-[10px] font-mono mb-1 uppercase tracking-widest opacity-80">
+                  {user ? `${user.displayName || 'Motorista'}` : 'Visitante'}
+                </div>
+                {user ? (
+                  <button onClick={logout} className="text-[8px] md:text-[10px] font-bold border border-black/20 px-2.5 py-1 rounded-lg hover:bg-black/5 hover:border-black/40 transition-all">
+                    Sair
+                  </button>
+                ) : (
+                  <button onClick={loginWithGoogle} className="text-[8px] md:text-[10px] font-bold bg-black text-white px-3 py-1 rounded-lg hover:bg-black/80 hover:shadow-lg hover:-translate-y-0.5 transition-all">
+                    Entrar
+                  </button>
+                )}
+              </div>
+            </header>
 
-      <main className="flex-1 min-h-0 w-full mx-auto grid grid-cols-1 lg:grid-cols-12 overflow-hidden print:block print:overflow-visible relative">
-        <section className={cn("col-span-1 lg:col-span-7 flex-col min-h-0 border-r border-black/10 bg-white/30 backdrop-blur-sm h-full print:hidden", currentView === 'chat' ? 'flex' : 'hidden lg:flex')}>
-          <ChatView 
-            state={state} 
-            onSendMessage={handleSendMessage} 
-            onGenerateAppeal={handleCreatePayment} 
-            isCreatingPayment={isCreatingPayment}
-          />
-        </section>
-        
-        <section className={cn("col-span-1 lg:col-span-5 flex-col min-h-0 h-full bg-[#F5F2ED] relative print:block print:bg-white print:h-auto", currentView === 'appeal' ? 'flex' : 'hidden lg:flex')}>
-          <AppealView 
-            state={state} 
-            onBack={() => setCurrentView('chat')} 
-            onGenerateAppeal={handleCreatePayment}
-            isCreatingPayment={isCreatingPayment}
-          />
-          {/* Vertical Accent Text */}
-          <div className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 print:hidden">
-            <div className="rotate-90 origin-right translate-x-full text-[100px] font-black text-black/5 select-none pointer-events-none">
-              RECURSOS
+            <ChatView 
+              state={state} 
+              onSendMessage={handleSendMessage} 
+              onGenerateAppeal={handleRequestAppealGeneration} 
+              isCreatingPayment={isCreatingPayment}
+            />
+          </section>
+          
+          <section className={cn("col-span-1 lg:col-span-7 flex-col min-h-0 h-full bg-white/20 relative print:block print:bg-white print:h-auto transition-all duration-300", currentView === 'appeal' ? 'flex' : 'hidden lg:flex')}>
+            <AppealView 
+              state={state} 
+              onBack={() => setCurrentView('chat')} 
+              onGenerateAppeal={handleRequestAppealGeneration}
+              isCreatingPayment={isCreatingPayment}
+            />
+            {/* Vertical Accent Text */}
+            <div className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 print:hidden z-[-1]">
+              <div className="rotate-90 origin-right translate-x-full text-[120px] font-black text-amber-900/5 select-none pointer-events-none">
+                RECURSOS
+              </div>
             </div>
-          </div>
-        </section>
-      </main>
+          </section>
+        </main>
 
-      <footer className="bg-black text-white p-4 flex justify-between items-center shrink-0 print:hidden">
+        {paymentInfo && (
+          <PaymentModal 
+            paymentInfo={paymentInfo} 
+            onClose={() => setPaymentInfo(null)} 
+            onPaymentConfirmed={handleGenerateAppeal} 
+          />
+        )}
+      </div>
+
+      <footer className="w-full max-w-[1440px] mx-auto bg-black/95 text-white p-2 flex justify-between items-center shrink-0 print:hidden relative z-10 backdrop-blur-md mt-2 md:rounded-xl shadow-lg text-[9px]">
         <div className="flex gap-4 md:gap-8">
-          <div className="text-[10px] uppercase tracking-widest font-bold opacity-70">Doutor Multa &copy; 2024</div>
-          <div className="text-[10px] uppercase tracking-widest font-bold opacity-70 hidden md:block">Privacidade</div>
-          <div className="text-[10px] uppercase tracking-widest font-bold opacity-70 hidden md:block">Termos de Uso</div>
+          <div className="text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-70 hover:opacity-100 transition-opacity cursor-pointer">Doutor Multa &copy; 2024</div>
+          <div className="text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-70 hidden md:block hover:opacity-100 transition-opacity cursor-pointer">Privacidade</div>
+          <div className="text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-70 hidden md:block hover:opacity-100 transition-opacity cursor-pointer">Termos de Uso</div>
         </div>
-        <div className="text-[10px] uppercase tracking-widest font-bold bg-white text-black px-2 py-1">
+        <div className="text-[9px] md:text-[10px] uppercase tracking-widest font-bold bg-amber-50 text-black px-3 py-1.5 rounded-full shadow-inner">
           Base Legal: Lei 9.503/97
         </div>
       </footer>
-
-      {paymentInfo && (
-        <PaymentModal 
-          paymentInfo={paymentInfo} 
-          onClose={() => setPaymentInfo(null)} 
-          onPaymentConfirmed={handleGenerateAppeal} 
-        />
-      )}
     </div>
   );
 }
