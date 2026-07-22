@@ -333,7 +333,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/chat", authMiddleware, async (req, res) => {
+  app.post("/api/chat", async (req, res) => {
     try {
       const { history, message, image } = req.body;
       

@@ -145,6 +145,10 @@ export default function App() {
   };
 
   const handleRequestAppealGeneration = async () => {
+    if (!user) {
+      await loginWithGoogle();
+      return;
+    }
     if (state.generationCount === 0) {
       // Primeira geração: Exige pagamento de R$ 29,90
       await handleCreatePayment(29.90, "Geração de Recurso de Multa em PDF");
