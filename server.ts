@@ -356,7 +356,7 @@ async function startServer() {
         
         try {
           const analyzerResponse = await ai.models.generateContent({
-            model: 'gemini-3.5-flash',
+            model: 'gemini-2.5-flash',
             contents: [
               {
                 role: 'user',
@@ -423,7 +423,7 @@ Instruções para você (Doutor Multa):
       }
 
       const response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
+        model: 'gemini-2.5-flash',
         contents: [
           ...formattedHistory,
           { role: 'user', parts: userParts }
@@ -453,7 +453,7 @@ Instruções para você (Doutor Multa):
 
       // 1. Agente Analista
       const analyzerResponse = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
+        model: 'gemini-2.5-flash',
         contents: [
            { role: 'user', parts: [{ text: "Histórico:\n" + historyText }] }
         ],
@@ -494,7 +494,7 @@ Instruções para você (Doutor Multa):
 
       // 2. Agente Redator
       const drafterResponse = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
+        model: 'gemini-2.5-flash',
         contents: [
            { role: 'user', parts: [{ text: "Data de Hoje: " + today + "\n\nRelatório do Analista (JSON):\n" + analyzerReport }] }
         ],
@@ -507,7 +507,7 @@ Instruções para você (Doutor Multa):
 
       // 3. Agente Revisor
       const reviewerResponse = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
+        model: 'gemini-2.5-flash',
         contents: [{ role: 'user', parts: [{ text: draftContent }] }],
         config: {
           systemInstruction: REVIEWER_PROMPT,
