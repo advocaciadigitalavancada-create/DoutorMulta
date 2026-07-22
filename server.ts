@@ -333,6 +333,15 @@ async function startServer() {
     }
   });
 
+  async function generateContentWithFallback(aiInstance: any, config: any) {
+    try {
+      return await aiInstance.models.generateContent({ ...config, model: 'gemini-3.6-flash' });
+    } catch (error) {
+      console.warn("Fallback de gemini-3.6-flash para gemini-flash-latest devido a erro:", error);
+      return await aiInstance.models.generateContent({ ...config, model: 'gemini-flash-latest' });
+    }
+  }
+
   app.post("/api/chat", async (req, res) => {
     try {
       const { history, message, image } = req.body;
@@ -355,8 +364,7 @@ async function startServer() {
         const mimeType = image.split(';')[0].split(':')[1] || 'image/jpeg';
         
         try {
-          const analyzerResponse = await ai.models.generateContent({
-            model: 'gemini-3.5-flash',
+          const analyzerResponse = await generateContentWithFallback(ai, {
             contents: [
               {
                 role: 'user',
@@ -422,8 +430,7 @@ Instruções para você (Doutor Multa):
         userParts.push({ inlineData: { data: base64Data, mimeType } });
       }
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
+      const response = await generateContentWithFallback(ai, {
         contents: [
           ...formattedHistory,
           { role: 'user', parts: userParts }
@@ -452,8 +459,7 @@ Instruções para você (Doutor Multa):
       const today = new Date().toLocaleDateString('pt-BR');
 
       // 1. Agente Analista
-      const analyzerResponse = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
+      const analyzerResponse = await generateContentWithFallback(ai, {
         contents: [
            { role: 'user', parts: [{ text: "Histórico:\n" + historyText }] }
         ],
@@ -493,8 +499,7 @@ Instruções para você (Doutor Multa):
       const analyzerReport = analyzerResponse.text;
 
       // 2. Agente Redator
-      const drafterResponse = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
+      const drafterResponse = await generateContentWithFallback(ai, {
         contents: [
            { role: 'user', parts: [{ text: "Data de Hoje: " + today + "\n\nRelatório do Analista (JSON):\n" + analyzerReport }] }
         ],
@@ -506,8 +511,7 @@ Instruções para você (Doutor Multa):
       const draftContent = drafterResponse.text;
 
       // 3. Agente Revisor
-      const reviewerResponse = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
+      const reviewerResponse = await generateContentWithFallback(ai, {
         contents: [{ role: 'user', parts: [{ text: draftContent }] }],
         config: {
           systemInstruction: REVIEWER_PROMPT,
