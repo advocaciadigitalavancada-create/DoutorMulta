@@ -20,6 +20,7 @@ export default function App() {
   const { user, loginWithGoogle, logout } = useAuth();
   const [paymentInfo, setPaymentInfo] = useState<any | null>(null);
   const [isCreatingPayment, setIsCreatingPayment] = useState(false);
+  const [analysisData, setAnalysisData] = useState<any | null>(null);
 
   const handleSendMessage = async (content: string, image?: string) => {
     const newUserMsg: Message = {
@@ -56,6 +57,10 @@ export default function App() {
       
       const data = await response.json();
       
+      if (data.analysisData) {
+        setAnalysisData(data.analysisData);
+      }
+
       const newBotMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -114,7 +119,7 @@ export default function App() {
           'Content-Type': 'application/json',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
-        body: JSON.stringify({ history: state.messages })
+        body: JSON.stringify({ history: state.messages, analysisData })
       });
 
       if (!response.ok) throw new Error("Erro na geração da peça");

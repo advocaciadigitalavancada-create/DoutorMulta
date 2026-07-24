@@ -11,7 +11,7 @@ const SYSTEM_INSTRUCTION = `Você é o Doutor Multa, o assistente virtual de ate
 Seu papel é de ACOLHIMENTO, CONFIRMAÇÃO DE DADOS e ORIENTAÇÃO. A análise jurídica detalhada e a redação do recurso são feitas por outros agentes especializados em segundo plano.
 
 ATENÇÃO E ÉTICA:
-Você é um assistente tecnológico (software) processador de textos, e não um advogado. Nunca faça consultoria jurídica. Se precisar avisar isso, faça de forma extremamente curta em uma única frase (ex: "Lembrando que sou uma IA e não presto consultoria jurídica"). Não faça discursos longos sobre isso.
+Você é um assistente tecnológico (software) processador de textos, e não um advogado. Nunca faça consultoria jurídica. Se precisar avisar isso, faça de forma extremamente curta em uma única frase (ex: "Lembrando que sou uma IA especialista em multas de trânsito e não presto consultoria jurídica"). Não faça discursos longos sobre isso.
 
 CONDUÇÃO DA CONVERSA:
 1. SAUDAÇÃO: Cumprimente o usuário, faça o aviso curto sobre ser IA, e peça o relato do caso, foto/PDF da multa e da CNH do condutor.
@@ -158,7 +158,7 @@ async function startServer() {
 
       const mpToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
       const asaasApiKey = process.env.ASAAS_API_KEY;
-      
+
       // 1. MERCADO PAGO INTEGRATION (Recomendado: Sem custos fixos, aprovação instantânea por CPF)
       if (mpToken) {
         const mpResponse = await fetch('https://api.mercadopago.com/v1/payments', {
@@ -179,7 +179,7 @@ async function startServer() {
         });
 
         const mpData = await mpResponse.json();
-        
+
         if (!mpResponse.ok || !mpData.id) {
           console.error("Erro no Mercado Pago:", mpData);
           throw new Error(mpData.message || "Erro ao criar cobrança no Mercado Pago");
@@ -199,14 +199,14 @@ async function startServer() {
       // 2. ASAAS INTEGRATION (Opção secundária se houver ASAAS_API_KEY no .env)
       if (asaasApiKey) {
         const apiUrl = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/api/v3';
-        
+
         const customerResponse = await fetch(`${apiUrl}/customers`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'access_token': asaasApiKey },
           body: JSON.stringify({ name: "Cliente Doutor Multa", cpfCnpj: "00000000000" })
         });
         const customerData = await customerResponse.json();
-        
+
         if (!customerData.id) throw new Error("Erro ao criar cliente no Asaas");
 
         const paymentResponse = await fetch(`${apiUrl}/payments`, {
@@ -242,7 +242,7 @@ async function startServer() {
       // 3. MOCK MODE (Ativado quando nenhuma API KEY é configurada)
       const paymentId = `mock_pay_${Date.now()}`;
       mockPayments.set(paymentId, { status: 'PENDING' });
-      
+
       setTimeout(() => {
         if (mockPayments.has(paymentId)) {
           mockPayments.set(paymentId, { status: 'CONFIRMED' });
@@ -255,7 +255,7 @@ async function startServer() {
 
       return res.json({
         id: paymentId,
-        encodedImage: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", 
+        encodedImage: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
         payload: payload,
         mock: true,
         gateway: 'mock'
@@ -289,7 +289,7 @@ async function startServer() {
           headers: { 'Authorization': `Bearer ${mpToken}` }
         });
         const checkData = await checkResponse.json();
-        
+
         const statusMap: Record<string, string> = {
           'approved': 'CONFIRMED',
           'pending': 'PENDING',
@@ -345,7 +345,7 @@ async function startServer() {
   app.post("/api/chat", async (req, res) => {
     try {
       const { history, message, image } = req.body;
-      
+
       const formattedHistory = [
         ...history.map((msg: any) => {
           const parts: any[] = [{ text: msg.content }];
@@ -362,7 +362,7 @@ async function startServer() {
       if (image) {
         const base64Data = image.split(',')[1];
         const mimeType = image.split(';')[0].split(':')[1] || 'image/jpeg';
-        
+
         try {
           const analyzerResponse = await generateContentWithFallback(ai, {
             contents: [
@@ -407,7 +407,7 @@ async function startServer() {
               }
             }
           });
-          
+
           const analysisJson = analyzerResponse.text;
           analysisContext = `\n\n[ANÁLISE DO SISTEMA EM SEGUNDO PLANO - INFORMAÇÃO PARA O ATENDENTE]:
 O sistema analisou a imagem enviada com sucesso. Aqui está o relatório estruturado em JSON:
@@ -451,17 +451,17 @@ Instruções para você (Doutor Multa):
   app.post("/api/generate-appeal", authMiddleware, async (req, res) => {
     try {
       const { history } = req.body;
-      
-      const historyText = history.map((msg: any) => 
+
+      const historyText = history.map((msg: any) =>
         `${msg.role === 'user' ? 'Motorista' : 'Doutor Multa'}: ${msg.content}`
-      ).join("\\n");
+      ).join("\n");
 
       const today = new Date().toLocaleDateString('pt-BR');
 
       // 1. Agente Analista
       const analyzerResponse = await generateContentWithFallback(ai, {
         contents: [
-           { role: 'user', parts: [{ text: "Histórico:\n" + historyText }] }
+          { role: 'user', parts: [{ text: "Histórico:\n" + historyText }] }
         ],
         config: {
           systemInstruction: ANALYZER_PROMPT,
@@ -501,7 +501,7 @@ Instruções para você (Doutor Multa):
       // 2. Agente Redator
       const drafterResponse = await generateContentWithFallback(ai, {
         contents: [
-           { role: 'user', parts: [{ text: "Data de Hoje: " + today + "\n\nRelatório do Analista (JSON):\n" + analyzerReport }] }
+          { role: 'user', parts: [{ text: "Data de Hoje: " + today + "\n\nRelatório do Analista (JSON):\n" + analyzerReport }] }
         ],
         config: {
           systemInstruction: DRAFTER_PROMPT,
@@ -521,7 +521,7 @@ Instruções para você (Doutor Multa):
 
       let finalDoc = reviewerResponse.text || "";
       // Remover possíveis blocos markdown que a IA ainda possa gerar por vício
-      finalDoc = finalDoc.replace(/```[A-Za-z]*\\n?/g, '').replace(/```/g, '').trim();
+      finalDoc = finalDoc.replace(/```[A-Za-z]*\n?/g, '').replace(/```/g, '').trim();
       // Garantia programática: substitui qualquer placeholder residual com colchetes por linha de preenchimento manual
       finalDoc = finalDoc.replace(/\[[^\]]{1,80}\]/g, '___________________________');
 
